@@ -1,10 +1,10 @@
-// Attendre que le document soit chargé
-document.addEventListener('DOMContentLoaded', async () => {
-  // Fonctions de logging avec préfixe
+// Wait for document to be loaded
+document.addEventListener("DOMContentLoaded", async () => {
+  // Logging functions with prefix
   function _log(message) {
     console.log(`[licenseRenderer] ${message}`);
   }
-  
+
   function _logError(message, error) {
     if (error) {
       console.error(`[licenseRenderer] ${message}`, error);
@@ -13,208 +13,225 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Références aux éléments DOM
-  const licenseKeyInput = document.getElementById('licenseKey');
-  const validateBtn = document.getElementById('validateBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  const useYesBtn = document.getElementById('useYesBtn');
-  const useNoBtn = document.getElementById('useNoBtn');
-  const useSavedBtn = document.getElementById('useSavedBtn');
-  const enterNewBtn = document.getElementById('enterNewBtn');
-  const buyLicenseBtn = document.getElementById('buyLicenseBtn');
-  const buyLicenseBtnInvalid = document.getElementById('buyLicenseBtnInvalid');
-  const licenseForm = document.getElementById('license-form');
-  const licenseInputForm = document.getElementById('license-input-form');
-  const savedLicenseNotification = document.getElementById('saved-license-notification');
-  const savedLicenseDisplay = document.getElementById('saved-license-display');
-  const checkingResult = document.getElementById('checking-result');
-  const validResult = document.getElementById('valid-result');
-  const invalidResult = document.getElementById('invalid-result');
-  const invalidMessage = document.getElementById('invalid-message');
-  const expirationInfo = document.getElementById('expiration-info');
-  const licenseKeyDisplay = document.getElementById('license-key-display');
-  
-  // Éléments d'interface pour les mises à jour
-  const checkUpdatesBtn = document.getElementById('checkUpdatesBtn');
-  const viewChangelogBtn = document.getElementById('viewChangelogBtn');
-  const updateInfo = document.getElementById('update-info');
-  const updateIcon = document.getElementById('update-icon');
-  const updateTitle = document.getElementById('update-title');
-  const updateMessage = document.getElementById('update-message');
-  const updateAction = document.getElementById('update-action');
-  const downloadUpdateBtn = document.getElementById('downloadUpdateBtn');
-  const changelogInfo = document.getElementById('changelog-info');
-  const changelogContent = document.getElementById('changelog-content');
-  
-  // Variable pour stocker les dernières informations de mise à jour
+  // DOM element references
+  const licenseKeyInput = document.getElementById("licenseKey");
+  const validateBtn = document.getElementById("validateBtn");
+  const retryBtn = document.getElementById("retryBtn");
+  const useYesBtn = document.getElementById("useYesBtn");
+  const useNoBtn = document.getElementById("useNoBtn");
+  const useSavedBtn = document.getElementById("useSavedBtn");
+  const enterNewBtn = document.getElementById("enterNewBtn");
+  const buyLicenseBtn = document.getElementById("buyLicenseBtn");
+  const buyLicenseBtnInvalid = document.getElementById("buyLicenseBtnInvalid");
+  const licenseForm = document.getElementById("license-form");
+  const licenseInputForm = document.getElementById("license-input-form");
+  const savedLicenseNotification = document.getElementById(
+    "saved-license-notification"
+  );
+  const savedLicenseDisplay = document.getElementById("saved-license-display");
+  const checkingResult = document.getElementById("checking-result");
+  const validResult = document.getElementById("valid-result");
+  const invalidResult = document.getElementById("invalid-result");
+  const invalidMessage = document.getElementById("invalid-message");
+  const expirationInfo = document.getElementById("expiration-info");
+  const licenseKeyDisplay = document.getElementById("license-key-display");
+
+  // UI elements for updates
+  const checkUpdatesBtn = document.getElementById("checkUpdatesBtn");
+  const viewChangelogBtn = document.getElementById("viewChangelogBtn");
+  const updateInfo = document.getElementById("update-info");
+  const updateIcon = document.getElementById("update-icon");
+  const updateTitle = document.getElementById("update-title");
+  const updateMessage = document.getElementById("update-message");
+  const updateAction = document.getElementById("update-action");
+  const downloadUpdateBtn = document.getElementById("downloadUpdateBtn");
+  const changelogInfo = document.getElementById("changelog-info");
+  const changelogContent = document.getElementById("changelog-content");
+
+  // Store last update information
   let lastUpdateInfo = null;
-  
-  // Écouteur d'événement pour les changements de langue
-  document.addEventListener('languageChanged', (event) => {
-    _log(`Langue changée: ${event.detail.language}`);
-    
-    // Mettre à jour les contenus dynamiques si visibles
-    if (updateInfo.style.display === 'block') {
+
+  // Event listener for language changes
+  document.addEventListener("languageChanged", (event) => {
+    _log(`Language changed: ${event.detail.language}`);
+
+    // Update dynamic contents if visible
+    if (updateInfo.style.display === "block") {
       if (lastUpdateInfo) {
-        // Réafficher avec les nouvelles traductions
+        // Re-render with new translations
         displayUpdateResult(lastUpdateInfo);
       }
     }
-    
-    // Mettre à jour l'historique des versions si affiché
-    if (changelogInfo.style.display === 'block') {
-      // Réafficher l'historique avec les nouvelles traductions
+
+    // Update version history if visible
+    if (changelogInfo.style.display === "block") {
+      // Re-render history with new translations
       displayVersionHistory();
     }
-    
-    // Mettre à jour les informations d'expiration si elles sont affichées
-    if (validResult.style.display === 'block' && lastLicenseResult) {
-      // Reformater les dates d'expiration avec les nouvelles traductions
+
+    // Update expiration info if visible
+    if (validResult.style.display === "block" && lastLicenseResult) {
+      // Reformat expiration dates with new translations
       displayValidLicense(lastLicenseResult);
     }
   });
-  
-  // Charger les informations de licence enregistrées
+
+  // Load saved license information
   const savedLicense = await window.licenseAPI.getSavedLicense();
   if (savedLicense) {
-    // Afficher la notification de licence sauvegardée
+    // Show saved license notification
     savedLicenseDisplay.textContent = maskLicenseKey(savedLicense);
-    savedLicenseNotification.style.display = 'block';
-    licenseInputForm.style.display = 'none';
+    savedLicenseNotification.style.display = "block";
+    licenseInputForm.style.display = "none";
     licenseKeyInput.value = savedLicense;
   }
 
-  // Fonction pour masquer la clé de licence (afficher juste les 4 derniers caractères)
+  // Mask license key (show only last 4 chars)
   function maskLicenseKey(key) {
     if (!key || key.length <= 4) return key;
-    return '•'.repeat(key.length - 4) + key.slice(-4);
+    return "•".repeat(key.length - 4) + key.slice(-4);
   }
 
-  // Fonction pour masquer tous les résultats
+  // Hide all results
   function hideAllResults() {
-    licenseForm.style.display = 'block';
-    checkingResult.style.display = 'none';
-    validResult.style.display = 'none';
-    invalidResult.style.display = 'none';
-    updateInfo.style.display = 'none';
+    licenseForm.style.display = "block";
+    checkingResult.style.display = "none";
+    validResult.style.display = "none";
+    invalidResult.style.display = "none";
+    updateInfo.style.display = "none";
   }
-  
-  // Fonction pour afficher le formulaire de licence
+
+  // Show license input form
   function showLicenseInputForm() {
-    savedLicenseNotification.style.display = 'none';
-    licenseInputForm.style.display = 'block';
-    licenseForm.style.display = 'block';
-    validResult.style.display = 'none';
-    invalidResult.style.display = 'none';
+    savedLicenseNotification.style.display = "none";
+    licenseInputForm.style.display = "block";
+    licenseForm.style.display = "block";
+    validResult.style.display = "none";
+    invalidResult.style.display = "none";
   }
-  
-  // Fonction pour formater une date
+
+  // Format a date
   function formatDate(dateString) {
     const date = new Date(dateString);
-    const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-    const timeOptions = { hour: '2-digit', minute: '2-digit' };
-    
-    // Récupérer la langue actuelle depuis le sélecteur
-    const languageSelect = document.getElementById('language-select');
-    const currentLanguage = languageSelect ? languageSelect.value : 'fr';
-    
-    // Formatter les dates selon la langue actuelle
-    return date.toLocaleDateString(currentLanguage, dateOptions) + ' ' + 
-           getTranslation('datetime.at', 'à') + ' ' + 
-           date.toLocaleTimeString(currentLanguage, timeOptions);
+    const dateOptions = { year: "numeric", month: "long", day: "numeric" };
+    const timeOptions = { hour: "2-digit", minute: "2-digit" };
+
+    // Get current language from selector
+    const languageSelect = document.getElementById("language-select");
+    const currentLanguage = languageSelect ? languageSelect.value : "en";
+
+    // Format dates according to current language
+    return (
+      date.toLocaleDateString(currentLanguage, dateOptions) +
+      " " +
+      getTranslation("datetime.at", "at") +
+      " " +
+      date.toLocaleTimeString(currentLanguage, timeOptions)
+    );
   }
-  
-  // Fonction pour afficher le résultat de validation
+
+  // Display validation result
   function displayValidLicense(result) {
-    licenseForm.style.display = 'none';
-    checkingResult.style.display = 'none';
-    validResult.style.display = 'block';
-    invalidResult.style.display = 'none';
-    
-    // Afficher les informations de licence
+    licenseForm.style.display = "none";
+    checkingResult.style.display = "none";
+    validResult.style.display = "block";
+    invalidResult.style.display = "none";
+
+    // Show license information
     const expiration = new Date(result.expiration);
     const now = new Date();
-    const daysUntilExpiration = Math.ceil((expiration - now) / (1000 * 60 * 60 * 24));
-    
-    // Construire les informations d'expiration
-    let expirationHtml = '';
-    
-    // Afficher la date d'activation si disponible
+    const daysUntilExpiration = Math.ceil(
+      (expiration - now) / (1000 * 60 * 60 * 24)
+    );
+
+    // Build expiration info
+    let expirationHtml = "";
+
+    // Show activation date if available
     if (result.activationDate) {
       const activationDate = formatDate(result.activationDate);
-      expirationHtml += `<p><strong>${getTranslation('license.activatedOn', 'Activée le:')}</strong> ${activationDate}</p>`;
+      expirationHtml += `<p><strong>${getTranslation(
+        "license.activatedOn",
+        "Activated on:"
+      )}</strong> ${activationDate}</p>`;
     }
-    
-    // Ajouter la date d'expiration
+
+    // Add expiration date
     const formattedExpiration = formatDate(result.expiration);
-    expirationHtml += `<p><strong>${getTranslation('license.expiresOn', 'Expire le:')}</strong> ${formattedExpiration}</p>`;
-    
+    expirationHtml += `<p><strong>${getTranslation(
+      "license.expiresOn",
+      "Expires on:"
+    )}</strong> ${formattedExpiration}</p>`;
+
     expirationInfo.innerHTML = expirationHtml;
-    
-    // Ajouter un avertissement si l'expiration est proche
+
+    // Add warning if expiration is near
     if (daysUntilExpiration <= 7) {
       expirationInfo.innerHTML += `
         <p style="color: var(--warning-color); font-weight: bold;">
-          ${getTranslation('license.expirationWarning', `Attention: Votre licence expire dans ${daysUntilExpiration} jours`)}
+          ${getTranslation(
+            "license.expirationWarning",
+            `Warning: Your license expires in ${daysUntilExpiration} days`
+          )}
         </p>
       `;
-      validResult.classList.add('warning');
+      validResult.classList.add("warning");
     } else {
-      validResult.classList.remove('warning');
+      validResult.classList.remove("warning");
     }
-    
-    // Cacher la section de mise à jour (elle sera affichée automatiquement après la vérification)
-    updateInfo.style.display = 'none';
-    
-    // Vérifier automatiquement les mises à jour
+
+    // Hide update section (it will be shown after check)
+    updateInfo.style.display = "none";
+
+    // Automatically check for updates
     setTimeout(() => {
       checkForUpdates();
-    }, 500); // Petit délai pour que l'interface s'affiche correctement d'abord
+    }, 500); // Small delay to let UI render first
   }
-  
-  // Stocker les résultats de licence pour utilisation ultérieure
+
+  // Store license results for later use
   let lastLicenseResult = null;
-  
-  // Fonction pour afficher une licence invalide
+
+  // Display an invalid license
   function displayInvalidLicense(message) {
-    licenseForm.style.display = 'none';
-    checkingResult.style.display = 'none';
-    validResult.style.display = 'none';
-    invalidResult.style.display = 'block';
-    
-    invalidMessage.textContent = message || 'Impossible de valider votre licence.';
+    licenseForm.style.display = "none";
+    checkingResult.style.display = "none";
+    validResult.style.display = "none";
+    invalidResult.style.display = "block";
+
+    invalidMessage.textContent = message || "Unable to validate your license.";
   }
-  
-  // Fonction pour traduire les clés en utilisant les traductions chargées
+
+  // Translate keys using loaded translations
   function getTranslation(key, params = {}) {
-    // Valeurs de fallback pour les clés courantes
+    // Fallback values for common keys
     const fallbackTranslations = {
-      'updates.upToDate': 'Your application is up to date.',
-      'updates.alreadyLatest': 'You are already using the latest version.',
-      'updates.checking': 'Checking for updates...',
-      'updates.available': 'Update available',
-      'updates.newVersion': 'A new version ({0}) is available!',
-      'updates.currentVersion': 'Your current version: {0}',
-      'updates.releaseNotes': 'Release notes:',
-      'updates.noReleaseNotes': 'No release notes available.',
-      'updates.connectionError': 'Connection Error',
-      'updates.unableToCheck': 'Unable to check for updates',
-      'updates.retrievalError': 'Retrieval Error',
-      'updates.unableToRetrieveHistory': 'Unable to retrieve version history',
-      'updates.error': 'Error',
-      'updates.unexpectedError': 'An unexpected error occurred',
-      'updates.noHistory': 'No version history available.',
-      'updates.historyEnd': 'End of version history'
+      "updates.upToDate": "Your application is up to date.",
+      "updates.alreadyLatest": "You are already using the latest version.",
+      "updates.checking": "Checking for updates...",
+      "updates.available": "Update available",
+      "updates.newVersion": "A new version ({0}) is available!",
+      "updates.currentVersion": "Your current version: {0}",
+      "updates.releaseNotes": "Release notes:",
+      "updates.noReleaseNotes": "No release notes available.",
+      "updates.connectionError": "Connection Error",
+      "updates.unableToCheck": "Unable to check for updates",
+      "updates.retrievalError": "Retrieval Error",
+      "updates.unableToRetrieveHistory": "Unable to retrieve version history",
+      "updates.error": "Error",
+      "updates.unexpectedError": "An unexpected error occurred",
+      "updates.noHistory": "No version history available.",
+      "updates.historyEnd": "End of version history",
     };
-    
-    // Trouver le div contenant les traductions qui est injecté par le script i18n
-    const translationsDiv = document.getElementById('translations-data');
+
+    // Find the div containing translations injected by i18n script
+    const translationsDiv = document.getElementById("translations-data");
     if (!translationsDiv) {
-      console.warn(`[i18n] Élément de traductions non trouvé pour la clé: ${key}`);
-      // Si la clé existe dans notre fallback, l'utiliser
+      console.warn(`[i18n] Translations element not found for key: ${key}`);
+      // Use fallback if available
       if (fallbackTranslations[key]) {
         let result = fallbackTranslations[key];
-        // Remplacer les paramètres {0}, {1}, etc. par leurs valeurs
+        // Replace params {0}, {1}, etc.
         if (params) {
           result = result.replace(/\{(\d+)\}/g, (match, number) => {
             return params[number] !== undefined ? params[number] : match;
@@ -224,220 +241,289 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       return key;
     }
-    
+
     try {
       const translations = JSON.parse(translationsDiv.textContent);
-      
-      // Diviser la clé en parties (ex: "updates.available" -> ["updates", "available"])
-      const parts = key.split('.');
+
+      // Split key into parts (e.g., "updates.available" -> ["updates", "available"])
+      const parts = key.split(".");
       let result = translations;
-      
-      // Parcourir les parties pour obtenir la valeur
+
+      // Traverse parts to obtain the value
       for (const part of parts) {
         if (result && result[part] !== undefined) {
           result = result[part];
         } else {
-          console.warn(`[i18n] Clé de traduction non trouvée: ${key}`);
-          // Si la clé existe dans notre fallback, l'utiliser
+          console.warn(`[i18n] Translation key not found: ${key}`);
+          // Use fallback if available
           if (fallbackTranslations[key]) {
             let fallbackResult = fallbackTranslations[key];
-            // Remplacer les paramètres {0}, {1}, etc. par leurs valeurs
+            // Replace params {0}, {1}, etc.
             if (params) {
-              fallbackResult = fallbackResult.replace(/\{(\d+)\}/g, (match, number) => {
-                return params[number] !== undefined ? params[number] : match;
-              });
+              fallbackResult = fallbackResult.replace(
+                /\{(\d+)\}/g,
+                (match, number) => {
+                  return params[number] !== undefined ? params[number] : match;
+                }
+              );
             }
             return fallbackResult;
           }
           return key;
         }
       }
-      
-      // S'assurer que le résultat est une chaîne
-      if (typeof result !== 'string') {
-        console.warn(`[i18n] La clé de traduction ${key} n'est pas une chaîne: ${typeof result}`);
-        // Si la clé existe dans notre fallback, l'utiliser
+
+      // Ensure result is a string
+      if (typeof result !== "string") {
+        console.warn(
+          `[i18n] Translation key ${key} is not a string: ${typeof result}`
+        );
+        // Use fallback if available
         if (fallbackTranslations[key]) {
           let fallbackResult = fallbackTranslations[key];
-          // Remplacer les paramètres {0}, {1}, etc. par leurs valeurs
+          // Replace params {0}, {1}, etc.
           if (params) {
-            fallbackResult = fallbackResult.replace(/\{(\d+)\}/g, (match, number) => {
-              return params[number] !== undefined ? params[number] : match;
-            });
+            fallbackResult = fallbackResult.replace(
+              /\{(\d+)\}/g,
+              (match, number) => {
+                return params[number] !== undefined ? params[number] : match;
+              }
+            );
           }
           return fallbackResult;
         }
         return key;
       }
-      
-      // Remplacer les paramètres {0}, {1}, etc. par leurs valeurs
+
+      // Replace params {0}, {1}, etc.
       if (params) {
         return result.replace(/\{(\d+)\}/g, (match, number) => {
           return params[number] !== undefined ? params[number] : match;
         });
       }
-      
+
       return result;
     } catch (error) {
-      console.error(`[i18n] Erreur lors de la traduction de la clé ${key}:`, error);
-      // Si la clé existe dans notre fallback, l'utiliser
+      console.error(`[i18n] Error translating key ${key}:`, error);
+      // Use fallback if available
       if (fallbackTranslations[key]) {
         let fallbackResult = fallbackTranslations[key];
-        // Remplacer les paramètres {0}, {1}, etc. par leurs valeurs
+        // Replace params {0}, {1}, etc.
         if (params) {
-          fallbackResult = fallbackResult.replace(/\{(\d+)\}/g, (match, number) => {
-            return params[number] !== undefined ? params[number] : match;
-          });
+          fallbackResult = fallbackResult.replace(
+            /\{(\d+)\}/g,
+            (match, number) => {
+              return params[number] !== undefined ? params[number] : match;
+            }
+          );
         }
         return fallbackResult;
       }
       return key;
     }
   }
-  
-  // Fonction pour vérifier les mises à jour manuellement
+
+  // Manually check for updates
   async function checkForUpdates() {
     try {
-      // Cacher l'historique des versions s'il est affiché
-      changelogInfo.style.display = 'none';
-      
-      // Afficher l'indicateur de chargement
-      updateInfo.style.display = 'block';
-      updateInfo.classList.remove('update-available');
-      updateIcon.textContent = '🔄';
-      updateTitle.textContent = getTranslation('updates.checking');
-      updateMessage.textContent = getTranslation('updates.checking');
-      updateAction.style.display = 'none';
-      
-      // Appeler l'API pour vérifier les mises à jour
+      // Hide version history if visible
+      changelogInfo.style.display = "none";
+
+      // Show loading indicator
+      updateInfo.style.display = "block";
+      updateInfo.classList.remove("update-available");
+      updateIcon.textContent = "🔄";
+      updateTitle.textContent = getTranslation("updates.checking");
+      updateMessage.textContent = getTranslation("updates.checking");
+      updateAction.style.display = "none";
+
+      // Call API to check for updates
       const updateResult = await window.licenseAPI.checkForUpdates();
-      
-      // Afficher les résultats
+
+      // Show results
       displayUpdateResult(updateResult);
     } catch (error) {
-      _logError('Erreur lors de la vérification des mises à jour:', error);
+      _logError("Error while checking for updates:", error);
       displayUpdateError(error);
     }
   }
-  
-  // Fonction pour afficher les résultats de vérification de mise à jour
+
+  // Show update check results
   function displayUpdateResult(updateData) {
-    // Stocker les infos de mise à jour pour une utilisation ultérieure
+    // Store update info for later use
     lastUpdateInfo = updateData;
-    
-    updateInfo.style.display = 'block';
-    
+
+    updateInfo.style.display = "block";
+
     // S'assurer que currentVersion est défini
-    const currentVersion = updateData.currentVersion || getTranslation('updates.currentVersion', {0: 'N/A'});
-    
+    const currentVersion =
+      updateData.currentVersion ||
+      getTranslation("updates.currentVersion", { 0: "N/A" });
+
     if (updateData.hasUpdate) {
-      // Mise à jour disponible
-      updateInfo.classList.add('update-available');
-      updateIcon.textContent = '⚠️';
-      updateTitle.textContent = getTranslation('updates.available');
+      // Update available
+      updateInfo.classList.add("update-available");
+      updateIcon.textContent = "⚠️";
+      updateTitle.textContent = getTranslation("updates.available");
       updateMessage.innerHTML = `
-        ${getTranslation('updates.currentVersion', {0: currentVersion})}<br>
-        ${getTranslation('updates.newVersion', {0: updateData.version || 'N/A'})}<br>
-        ${updateData.changelog ? `<strong>${getTranslation('updates.releaseNotes')}</strong> ${updateData.changelog}` : getTranslation('updates.noReleaseNotes')}
+        ${getTranslation("updates.currentVersion", { 0: currentVersion })}<br>
+        ${getTranslation("updates.newVersion", {
+          0: updateData.version || "N/A",
+        })}<br>
+        ${
+          updateData.changelog
+            ? `<strong>${getTranslation("updates.releaseNotes")}</strong> ${
+                updateData.changelog
+              }`
+            : getTranslation("updates.noReleaseNotes")
+        }
       `;
-      
-      // Afficher le bouton de téléchargement
-      updateAction.style.display = 'block';
-      
-      // Événement pour le bouton de téléchargement
-      downloadUpdateBtn.onclick = function() {
-        // Télécharger directement sans re-vérifier
+
+      // Show download button
+      updateAction.style.display = "block";
+
+      // Download button handler
+      downloadUpdateBtn.onclick = function () {
+        // Download directly without re-checking
         window.licenseAPI.downloadUpdate(updateData);
       };
     } else {
-      // Pas de mise à jour
-      updateInfo.classList.remove('update-available');
-      updateIcon.textContent = '✓';
-      updateTitle.textContent = getTranslation('updates.upToDate');
-      updateMessage.textContent = getTranslation('updates.alreadyLatest');
-      updateAction.style.display = 'none';
+      // No update
+      updateInfo.classList.remove("update-available");
+      updateIcon.textContent = "✓";
+      updateTitle.textContent = getTranslation("updates.upToDate");
+      updateMessage.textContent = getTranslation("updates.alreadyLatest");
+      updateAction.style.display = "none";
     }
   }
-  
-  // Fonction pour afficher une erreur de vérification de mise à jour
+
+  // Show update check error
   function displayUpdateError(error) {
-    updateInfo.style.display = 'block';
-    updateInfo.classList.remove('update-available');
-    updateIcon.textContent = '⚠️';
-    updateTitle.textContent = getTranslation('updates.connectionError');
-    updateMessage.textContent = error.message || getTranslation('updates.unableToCheck');
-    updateAction.style.display = 'none';
+    updateInfo.style.display = "block";
+    updateInfo.classList.remove("update-available");
+    updateIcon.textContent = "⚠️";
+    updateTitle.textContent = getTranslation("updates.connectionError");
+    updateMessage.textContent =
+      error.message || getTranslation("updates.unableToCheck");
+    updateAction.style.display = "none";
   }
-  
-  // Fonction pour afficher l'historique des versions
+
+  // Show version history
   async function displayVersionHistory() {
     try {
-      // Masquer les autres informations
-      updateInfo.style.display = 'none';
-      
-      // Afficher l'indicateur de chargement
-      changelogInfo.style.display = 'block';
-      changelogContent.innerHTML = `<div class="spinner" style="margin: 20px auto;"></div><p>${getTranslation('updates.checking')}</p>`;
-      
-      // Récupérer l'historique des versions
+      // Hide other info
+      updateInfo.style.display = "none";
+
+      // Show loading indicator
+      changelogInfo.style.display = "block";
+      changelogContent.innerHTML = `<div class="spinner" style="margin: 20px auto;"></div><p>${getTranslation(
+        "updates.checking"
+      )}</p>`;
+
+      // Retrieve version history
       const historyResult = await window.licenseAPI.getVersionHistory();
-      
+
       if (historyResult.success) {
-        const currentVersion = historyResult.currentVersion || getTranslation('updates.currentVersion', {0: 'N/A'});
-        let htmlContent = '';
-        
+        const currentVersion =
+          historyResult.currentVersion ||
+          getTranslation("updates.currentVersion", { 0: "N/A" });
+        let htmlContent = "";
+
         if (historyResult.versions && historyResult.versions.length > 0) {
-          // Ajouter une indication de la version actuelle
+          // Add current version indicator
           htmlContent += `<div class="current-version">
-            <p><strong>${getTranslation('updates.currentVersion', {0: ''})}</strong> ${currentVersion}</p>
+            <p><strong>${getTranslation("updates.currentVersion", {
+              0: "",
+            })}</strong> ${currentVersion}</p>
           </div>`;
-          
-          // Ajouter chaque version avec son changelog
+
+          // Add each version with its changelog
           historyResult.versions.forEach((version, index) => {
             const isCurrentVersion = version.version === currentVersion;
-            
+
             htmlContent += `
-              <div class="version-item ${isCurrentVersion ? 'current' : ''}" style="margin-top: 20px; padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-radius: 5px; border-left: 3px solid ${isCurrentVersion ? 'var(--success-color)' : 'var(--primary-color)'}">
+              <div class="version-item ${
+                isCurrentVersion ? "current" : ""
+              }" style="margin-top: 20px; padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-radius: 5px; border-left: 3px solid ${
+              isCurrentVersion ? "var(--success-color)" : "var(--primary-color)"
+            }">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                  <h3 style="margin: 0; ${isCurrentVersion ? 'color: var(--success-color)' : ''}">Version ${version.version}</h3>
-                  <span style="font-size: 0.9em; opacity: 0.8;">${version.releaseDate ? formatDate(version.releaseDate) : ''}</span>
+                  <h3 style="margin: 0; ${
+                    isCurrentVersion ? "color: var(--success-color)" : ""
+                  }">Version ${version.version}</h3>
+                  <span style="font-size: 0.9em; opacity: 0.8;">${
+                    version.releaseDate ? formatDate(version.releaseDate) : ""
+                  }</span>
                 </div>
-                ${version.changelog ? `<div class="changelog" style="white-space: pre-wrap;">${version.changelog}</div>` : `<p style="font-style: italic; opacity: 0.6;">${getTranslation('updates.noReleaseNotes')}</p>`}
+                ${
+                  version.changelog
+                    ? `<div class="changelog" style="white-space: pre-wrap;">${version.changelog}</div>`
+                    : `<p style="font-style: italic; opacity: 0.6;">${getTranslation(
+                        "updates.noReleaseNotes"
+                      )}</p>`
+                }
               </div>
             `;
           });
-          
-          // Ajouter du contenu pour s'assurer que le défilement est nécessaire
+
+          // Add content to ensure scrolling is needed
           htmlContent += `
             <div style="margin-top: 20px; padding: 15px; opacity: 0.7; background-color: rgba(0, 0, 0, 0.2); border-radius: 5px;">
-              <h3>${getTranslation('app.title')}</h3>
-              <p style="margin-top: 10px;">${getTranslation('updates.autoUpdateInfo', 'Cette application est régulièrement mise à jour pour améliorer votre expérience.')}</p>
-              <p>${getTranslation('updates.updateInclude', 'Les mises à jour peuvent inclure :')}</p>
+              <h3>${getTranslation("app.title")}</h3>
+              <p style="margin-top: 10px;">${getTranslation(
+                "updates.autoUpdateInfo",
+                "This application is regularly updated to improve your experience."
+              )}</p>
+              <p>${getTranslation(
+                "updates.updateInclude",
+                "Updates may include:"
+              )}</p>
               <ul style="margin-left: 20px; margin-top: 10px;">
-                <li>${getTranslation('updates.newFeatures', 'Nouvelles fonctionnalités')}</li>
-                <li>${getTranslation('updates.bugFixes', 'Corrections de bugs')}</li>
-                <li>${getTranslation('updates.performance', 'Améliorations de performance')}</li>
-                <li>${getTranslation('updates.security', 'Mises à jour de sécurité')}</li>
+                <li>${getTranslation(
+                  "updates.newFeatures",
+                  "New features"
+                )}</li>
+                <li>${getTranslation(
+                  "updates.bugFixes",
+                  "Corrections de bugs"
+                )}</li>
+                <li>${getTranslation(
+                  "updates.performance",
+                  "Performance improvements"
+                )}</li>
+                <li>${getTranslation(
+                  "updates.security",
+                  "Security updates"
+                )}</li>
               </ul>
-              <p style="margin-top: 15px;">${getTranslation('updates.recommendation', 'Nous vous recommandons de toujours utiliser la dernière version disponible.')}</p>
+              <p style="margin-top: 15px;">${getTranslation(
+                "updates.recommendation",
+                "We recommend always using the latest available version."
+              )}</p>
             </div>
             
             <div style="height: 300px; padding-top: 30px; text-align: center; color: rgba(255,255,255,0.4);">
-              <p>— ${getTranslation('updates.historyEnd', 'Fin de l\'historique des versions')} —</p>
+              <p>— ${getTranslation(
+                "updates.historyEnd",
+                "End of version history"
+              )} —</p>
             </div>
           `;
         } else {
-          htmlContent = `<p>${getTranslation('updates.noHistory', 'Aucun historique de version disponible.')}</p>`;
+          htmlContent = `<p>${getTranslation(
+            "updates.noHistory",
+            "No version history available."
+          )}</p>`;
         }
-        
+
         changelogContent.innerHTML = htmlContent;
-        
+
         // Forcer le rafraîchissement du layout pour assurer que le défilement fonctionne
         setTimeout(() => {
-          changelogContent.style.display = 'none';
+          changelogContent.style.display = "none";
           changelogContent.offsetHeight; // Force le reflow
-          changelogContent.style.display = 'block';
-          
+          changelogContent.style.display = "block";
+
           // Configurer les contrôles de défilement
           setupScrollControls();
         }, 50);
@@ -445,191 +531,213 @@ document.addEventListener('DOMContentLoaded', async () => {
         changelogContent.innerHTML = `
           <div style="text-align: center; padding: 20px;">
             <span style="font-size: 30px; color: var(--danger-color);">⚠️</span>
-            <p style="margin-top: 10px; font-weight: bold;">${getTranslation('updates.retrievalError', 'Erreur de récupération')}</p>
-            <p>${historyResult.message || getTranslation('updates.unableToRetrieveHistory', 'Impossible de récupérer l\'historique des versions')}</p>
+            <p style="margin-top: 10px; font-weight: bold;">${getTranslation(
+              "updates.retrievalError",
+              "Erreur de récupération"
+            )}</p>
+            <p>${
+              historyResult.message ||
+              getTranslation(
+                "updates.unableToRetrieveHistory",
+                "Impossible de récupérer l'historique des versions"
+              )
+            }</p>
           </div>
         `;
       }
     } catch (error) {
-      _logError('Erreur lors de l\'affichage de l\'historique des versions:', error);
+      _logError("Error while displaying version history:", error);
       changelogContent.innerHTML = `
         <div style="text-align: center; padding: 20px;">
           <span style="font-size: 30px; color: var(--danger-color);">⚠️</span>
-          <p style="margin-top: 10px; font-weight: bold;">${getTranslation('updates.error', 'Erreur')}</p>
-          <p>${error.message || getTranslation('updates.unexpectedError', 'Une erreur inattendue s\'est produite')}</p>
+          <p style="margin-top: 10px; font-weight: bold;">${getTranslation(
+            "updates.error",
+            "Error"
+          )}</p>
+          <p>${
+            error.message ||
+            getTranslation(
+              "updates.unexpectedError",
+              "An unexpected error occurred"
+            )
+          }</p>
         </div>
       `;
     }
   }
-  
-  // Fonction pour configurer des contrôles de défilement personnalisés
+
+  // Setup custom scroll controls
   function setupScrollControls() {
-    // Supprimer les boutons de défilement et ne garder que les gestionnaires d'événements
-    
-    // Assurer que les événements de molette de souris fonctionnent
-    changelogContent.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const delta = e.deltaY || e.detail || e.wheelDelta;
-      changelogContent.scrollTop += delta > 0 ? 60 : -60;
-    }, { passive: false });
-    
-    // Ajouter un gestionnaire de clavier pour les flèches haut/bas
-    changelogContent.tabIndex = 0; // Pour permettre le focus
-    changelogContent.style.outline = 'none'; // Pour cacher l'outline du focus
-    
-    changelogContent.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp') {
+    // Remove scroll buttons and keep only event handlers
+
+    // Ensure mouse wheel events work
+    changelogContent.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        const delta = e.deltaY || e.detail || e.wheelDelta;
+        changelogContent.scrollTop += delta > 0 ? 60 : -60;
+      },
+      { passive: false }
+    );
+
+    // Add keyboard handler for up/down arrows
+    changelogContent.tabIndex = 0; // allow focus
+    changelogContent.style.outline = "none"; // hide focus outline
+
+    changelogContent.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") {
         e.preventDefault();
         changelogContent.scrollTop -= 60;
-      } else if (e.key === 'ArrowDown') {
+      } else if (e.key === "ArrowDown") {
         e.preventDefault();
         changelogContent.scrollTop += 60;
       }
     });
-    
-    // Mettre le focus sur le conteneur pour permettre la navigation au clavier
+
+    // Focus the container to allow keyboard navigation
     changelogContent.focus();
   }
-  
-  // Fonction pour valider une clé de licence
+
+  // Validate a license key
   async function validateLicenseKey(licenseKey) {
     if (!licenseKey) return;
-    
-    // Afficher l'indicateur de chargement
-    licenseForm.style.display = 'none';
-    checkingResult.style.display = 'block';
-    validResult.style.display = 'none';
-    invalidResult.style.display = 'none';
-    
+
+    // Show loading indicator
+    licenseForm.style.display = "none";
+    checkingResult.style.display = "block";
+    validResult.style.display = "none";
+    invalidResult.style.display = "none";
+
     try {
       await window.licenseAPI.validateLicense(licenseKey);
-      // Le reste est géré par les écouteurs d'événements
+      // The rest is handled by event listeners
     } catch (error) {
-      _logError('Erreur lors de la validation:', error);
-      displayInvalidLicense('Une erreur inattendue s\'est produite.');
+      _logError("Error during validation:", error);
+      displayInvalidLicense("An unexpected error occurred.");
     }
   }
-  
-  // Événement pour le bouton "Vérifier les mises à jour"
-  checkUpdatesBtn.addEventListener('click', checkForUpdates);
-  
-  // Événement pour le bouton "Historique des versions"
-  viewChangelogBtn.addEventListener('click', () => {
-    // Toggle: Si l'historique est déjà affiché, le cacher
-    if (changelogInfo.style.display === 'block') {
-      changelogInfo.style.display = 'none';
+
+  // Button event: "Check for updates"
+  checkUpdatesBtn.addEventListener("click", checkForUpdates);
+
+  // Button event: "Version history"
+  viewChangelogBtn.addEventListener("click", () => {
+    // Toggle: if history is already visible, hide it
+    if (changelogInfo.style.display === "block") {
+      changelogInfo.style.display = "none";
       return;
     }
-    
-    // Masquer les informations de mise à jour si elles sont affichées
-    updateInfo.style.display = 'none';
-    
-    // Afficher l'historique des versions
+
+    // Hide update information if visible
+    updateInfo.style.display = "none";
+
+    // Show version history
     displayVersionHistory();
   });
-  
-  // Événement pour le bouton "Utiliser cette licence"
-  useSavedBtn.addEventListener('click', () => {
-    // Vérifier le statut de la licence sauvegardée
+
+  // Button event: "Use this license"
+  useSavedBtn.addEventListener("click", () => {
+    // Validate saved license
     validateLicenseKey(savedLicense);
   });
-  
-  // Événement pour le bouton "Entrer une nouvelle licence"
-  enterNewBtn.addEventListener('click', () => {
+
+  // Button event: "Enter a new license"
+  enterNewBtn.addEventListener("click", () => {
     showLicenseInputForm();
   });
-  
-  // Événement pour le bouton "Oui" (utiliser cette licence)
-  useYesBtn.addEventListener('click', () => {
-    _log("Bouton Oui cliqué - Signal envoyé au processus principal");
-    // Signal au processus principal que l'utilisateur a validé la licence
+
+  // Button event: "Yes" (use this license)
+  useYesBtn.addEventListener("click", () => {
+    _log("Yes button clicked - Signal sent to main process");
+    // Signal to main process that user validated the license
     window.licenseAPI.signalLicenseValidated();
   });
-  
-  // Événement pour le bouton "Non" (changer de licence)
-  useNoBtn.addEventListener('click', () => {
-    // Afficher le formulaire pour saisir une nouvelle licence
-    licenseKeyInput.value = '';
+
+  // Button event: "No" (change license)
+  useNoBtn.addEventListener("click", () => {
+    // Show form to enter a new license
+    licenseKeyInput.value = "";
     showLicenseInputForm();
   });
-  
-  // Événement lors de la vérification en cours
+
+  // Event: checking in progress
   window.licenseAPI.onLicenseChecking(() => {
-    licenseForm.style.display = 'none';
-    checkingResult.style.display = 'block';
-    validResult.style.display = 'none';
-    invalidResult.style.display = 'none';
+    licenseForm.style.display = "none";
+    checkingResult.style.display = "block";
+    validResult.style.display = "none";
+    invalidResult.style.display = "none";
   });
-  
-  // Événement après vérification réussie
+
+  // Event: after successful verification
   window.licenseAPI.onLicenseResult((result) => {
     if (result.valid) {
       const savedLicense = licenseKeyInput.value.trim();
       licenseKeyDisplay.textContent = maskLicenseKey(savedLicense);
-      lastLicenseResult = result; // Sauvegarder le résultat pour utilisation ultérieure
+      lastLicenseResult = result; // Save result for later use
       displayValidLicense(result);
     } else {
       displayInvalidLicense(result.message);
     }
   });
-  
-  // Événement en cas d'erreur de vérification
+
+  // Event: verification error
   window.licenseAPI.onLicenseError((errorMessage) => {
     displayInvalidLicense(errorMessage);
   });
-  
-  // Événements pour la vérification des mises à jour - gérés désormais manuellement
+
+  // Events for update checks - now handled manually
   window.licenseAPI.onUpdateCheckResult((result) => {
     lastUpdateInfo = result;
-    // Ne pas afficher automatiquement - l'utilisateur va cliquer sur le bouton
+    // Do not display automatically - user will click the button
   });
-  
+
   window.licenseAPI.onUpdateCheckError((error) => {
-    _logError('Erreur lors de la vérification des mises à jour:', error);
-    // Ne pas afficher automatiquement - l'utilisateur va cliquer sur le bouton
+    _logError("Error while checking for updates:", error);
+    // Do not display automatically - user will click the button
   });
-  
-  // Événement de validation de la licence
-  validateBtn.addEventListener('click', async () => {
+
+  // Validate button click
+  validateBtn.addEventListener("click", async () => {
     const licenseKey = licenseKeyInput.value.trim();
-    
+
     if (!licenseKey) {
-      invalidMessage.textContent = 'Veuillez entrer une clé de licence.';
-      invalidResult.style.display = 'block';
+      invalidMessage.textContent = "Please enter a license key.";
+      invalidResult.style.display = "block";
       return;
     }
-    
+
     validateLicenseKey(licenseKey);
   });
-  
-  // Événement pour réessayer
-  retryBtn.addEventListener('click', () => {
+
+  // Retry event
+  retryBtn.addEventListener("click", () => {
     hideAllResults();
-    // Si une licence était sauvegardée, montrer la notification
+    // If a license was saved, show the notification
     if (savedLicense) {
       savedLicenseDisplay.textContent = maskLicenseKey(savedLicense);
-      savedLicenseNotification.style.display = 'block';
-      licenseInputForm.style.display = 'none';
+      savedLicenseNotification.style.display = "block";
+      licenseInputForm.style.display = "none";
     } else {
-      licenseInputForm.style.display = 'block';
+      licenseInputForm.style.display = "block";
     }
   });
-  
-  // Activer la validation par la touche Entrée
-  licenseKeyInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
+
+  // Enable Enter key to trigger validation
+  licenseKeyInput.addEventListener("keypress", (event) => {
+    if (event.key === "Enter") {
       validateBtn.click();
     }
   });
-  
-  // Gestionnaires pour les boutons d'achat de licence
-  buyLicenseBtn.addEventListener('click', () => {
-    _log("Redirection vers la page d'achat de licence");
-    window.licenseAPI.openExternalLink('https://6truc.mysellauth.com/');
+
+  // Handlers for license purchase buttons
+  buyLicenseBtn.addEventListener("click", () => {
+    _log("Redirecting to license purchase page");
+    window.licenseAPI.openExternalLink("https://6truc.mysellauth.com/");
   });
-  
-  buyLicenseBtnInvalid.addEventListener('click', () => {
-    _log("Redirection vers la page d'achat de licence depuis l'écran d'invalidité");
-    window.licenseAPI.openExternalLink('https://6truc.mysellauth.com/');
+
+  buyLicenseBtnInvalid.addEventListener("click", () => {
+    _log("Redirecting to license purchase page from invalid screen");
+    window.licenseAPI.openExternalLink("https://6truc.mysellauth.com/");
   });
-}); 
+});

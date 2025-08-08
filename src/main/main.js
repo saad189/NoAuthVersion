@@ -1,12 +1,12 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron');
-const path = require('path');
-const SelectionWindow = require('./selectionWindow');
-const MainViewWindow = require('./mainViewWindow');
-const { createMainViewWindow } = require('./mainViewWindow');
-const LicenseManager = require('../license/licenseManager');
+const { app, BrowserWindow, ipcMain, Menu } = require("electron");
+const path = require("path");
+const SelectionWindow = require("./selectionWindow");
+const MainViewWindow = require("./mainViewWindow");
+const { createMainViewWindow } = require("./mainViewWindow");
+const LicenseManager = require("../license/licenseManager");
 
-// Définir le chemin de l'icône de l'application
-const iconPath = path.join(__dirname, '../../build/icon.ico');
+// Define the application icon path
+const iconPath = path.join(__dirname, "../../build/icon.ico");
 
 let selectionWindow = null;
 let mainViewWindow = null;
@@ -14,72 +14,70 @@ let macroActive = false;
 let macroInterval = null;
 let licenseManager = null;
 
-// Fonction pour créer le menu de l'application
+// Function to create the application menu
 function createApplicationMenu() {
   const template = [
     {
-      label: 'Fichier',
-      submenu: [
-        { role: 'quit', label: 'Quitter' }
-      ]
+      label: "File",
+      submenu: [{ role: "quit", label: "Quit" }],
     },
     {
-      label: 'Édition',
+      label: "Edit",
       submenu: [
-        { role: 'undo', label: 'Annuler' },
-        { role: 'redo', label: 'Rétablir' },
-        { type: 'separator' },
-        { role: 'cut', label: 'Couper' },
-        { role: 'copy', label: 'Copier' },
-        { role: 'paste', label: 'Coller' }
-      ]
+        { role: "undo", label: "Undo" },
+        { role: "redo", label: "Redo" },
+        { type: "separator" },
+        { role: "cut", label: "Cut" },
+        { role: "copy", label: "Copy" },
+        { role: "paste", label: "Paste" },
+      ],
     },
     {
-      label: 'Affichage',
+      label: "View",
       submenu: [
-        { role: 'reload', label: 'Recharger' },
-        { role: 'toggleDevTools', label: 'Outils de développement' },
-        { type: 'separator' },
-        { role: 'resetZoom', label: 'Zoom normal' },
-        { role: 'zoomIn', label: 'Zoom avant' },
-        { role: 'zoomOut', label: 'Zoom arrière' },
-        { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Plein écran' }
-      ]
+        { role: "reload", label: "Reload" },
+        { role: "toggleDevTools", label: "Developer Tools" },
+        { type: "separator" },
+        { role: "resetZoom", label: "Normal Zoom" },
+        { role: "zoomIn", label: "Zoom In" },
+        { role: "zoomOut", label: "Zoom Out" },
+        { type: "separator" },
+        { role: "togglefullscreen", label: "Full Screen" },
+      ],
     },
     {
-      label: 'Outils',
+      label: "Tools",
       submenu: [
         {
-          label: 'Panneau de Synchronisation',
+          label: "Synchronization Panel",
           click: () => {
             if (mainViewWindow) {
               mainViewWindow.openSyncPanel();
             }
-          }
+          },
         },
         {
-          label: 'Gestion de Licence',
+          label: "License Management",
           click: () => {
             if (licenseManager) {
               //licenseManager.showLicenseWindow();
             }
-          }
+          },
         },
         {
-          label: 'Réinitialiser Licence',
+          label: "Reset License",
           click: () => {
             if (licenseManager) {
-              // Effacer les données de licence
-              licenseManager.store.delete('licenseKey');
-              licenseManager.store.delete('licenseStatus');
-              // Afficher un message de confirmation
+              // Clear license data
+              licenseManager.store.delete("licenseKey");
+              licenseManager.store.delete("licenseStatus");
+              // Show confirmation message
               const resetWindow = new BrowserWindow({
                 width: 300,
                 height: 150,
                 autoHideMenuBar: true,
                 resizable: false,
-                modal: true
+                modal: true,
               });
               resetWindow.loadURL(`data:text/html;charset=utf-8,
                 <html>
@@ -90,40 +88,42 @@ function createApplicationMenu() {
                     </style>
                   </head>
                   <body>
-                    <h3>Licence réinitialisée</h3>
-                    <p>Redémarrez l'application pour appliquer les changements.</p>
+                    <h3>License Reset</h3>
+                    <p>Please restart the application to apply changes.</p>
                     <button onclick="window.close()">OK</button>
                   </body>
                 </html>
               `);
             }
-          }
-        }
-      ]
+          },
+        },
+      ],
     },
     {
-      role: 'help',
-      label: 'Aide',
+      role: "help",
+      label: "Help",
       submenu: [
         {
-          label: 'À propos',
+          label: "About",
           click: () => {
-            // Afficher une fenêtre avec des informations sur l'application
+            // Show window with application information
             const aboutWindow = new BrowserWindow({
               width: 300,
               height: 200,
-              title: 'À propos',
+              title: "About",
               autoHideMenuBar: true,
               resizable: false,
               webPreferences: {
-                nodeIntegration: true
-              }
+                nodeIntegration: true,
+              },
             });
-            aboutWindow.loadFile(path.join(__dirname, '../renderer/about.html'));
-          }
-        }
-      ]
-    }
+            aboutWindow.loadFile(
+              path.join(__dirname, "../renderer/about.html")
+            );
+          },
+        },
+      ],
+    },
   ];
 
   const menu = Menu.buildFromTemplate(template);
@@ -132,180 +132,186 @@ function createApplicationMenu() {
 
 function createSelectionWindow() {
   selectionWindow = new SelectionWindow();
-  selectionWindow.window.on('closed', () => {
+  selectionWindow.window.on("closed", () => {
     selectionWindow = null;
   });
 }
 
-// Vérifier la licence avant de lancer l'application
+// Check license before launching the application
 async function checkLicense() {
-  // Initialiser le gestionnaire de licence s'il n'existe pas déjà
+  // Initialize license manager if it doesn't already exist
   if (!licenseManager) {
     licenseManager = new LicenseManager();
 
     // 🎭 Spoof internal license status manually
     licenseManager.checkExistingLicense = () => ({
       valid: true,
-      licenseKey: 'SPOOFED-KEY',
+      licenseKey: "SPOOFED-KEY",
       activationDate: new Date().toISOString(),
-      hardwareId: 'FAKE-HWID'
+      hardwareId: "FAKE-HWID",
     });
 
     // 🧨 Optional: patch the activation function in case it's called elsewhere
     licenseManager.activateLicense = async () => ({
       valid: true,
-      licenseKey: 'SPOOFED-KEY',
+      licenseKey: "SPOOFED-KEY",
       activationDate: new Date().toISOString(),
-      hardwareId: 'FAKE-HWID'
+      hardwareId: "FAKE-HWID",
     });
 
     // Optional: patch showLicenseWindow() to avoid UI popup
     licenseManager.showLicenseWindow = async () => ({
       valid: true,
-      licenseKey: 'SPOOFED-KEY',
+      licenseKey: "SPOOFED-KEY",
       activationDate: new Date().toISOString(),
-      hardwareId: 'FAKE-HWID'
+      hardwareId: "FAKE-HWID",
     });
   }
 
   // ✅ Continue as if license is valid
-  console.log('[FAKE LICENSE] Licence valide simulée, démarrage de l\'application...');
+  console.log(
+    "[FAKE LICENSE] Valid license simulated, starting application..."
+  );
   createSelectionWindow();
   createApplicationMenu();
   setupIPCHandlers();
 }
 
-
 app.whenReady().then(() => {
-  // Définir l'icône pour toute l'application
-  if (process.platform === 'win32') {
+  // Set the icon for the entire application
+  if (process.platform === "win32") {
     app.setAppUserModelId(app.getName());
   }
-  
-  // Vérifier la licence avant de lancer l'application
+
+  // Check license before launching the application
   checkLicense();
-  
-  app.on('activate', () => {
+
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      // Vérifier à nouveau la licence si aucune fenêtre n'est ouverte
+      // Check license again if no window is open
       checkLicense();
     }
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-// Ajouter les écouteurs d'événements IPC
+// Add IPC event listeners
 function setupIPCHandlers() {
-  // Événement pour démarrer une session
-  ipcMain.on('start-session', (event, config) => {
+  // Event to start a session
+  ipcMain.on("start-session", (event, config) => {
     createMainViewWindow(config);
     selectionWindow.window.close();
   });
-  
-  // Événement pour ouvrir le panneau de synchronisation
-  ipcMain.on('open-sync-panel', () => {
+
+  // Event to open synchronization panel
+  ipcMain.on("open-sync-panel", () => {
     if (mainViewWindow) {
       mainViewWindow.openSyncPanel();
     }
   });
-  
-  // Événement pour exécuter une macro
-  ipcMain.on('execute-macro', (event, data) => {
+
+  // Event to execute a macro
+  ipcMain.on("execute-macro", (event, data) => {
     const { macroId, gameMode } = data;
-    
+
     if (mainViewWindow) {
-      // Utiliser le macroManager pour exécuter la macro
+      // Use macroManager to execute the macro
       mainViewWindow.executeMacro(macroId, gameMode);
     }
   });
-  
-  // Événement pour recevoir les paramètres de bitrate
-  ipcMain.on('update-bitrate-settings', (event, settings) => {
-    console.log('Paramètres de bitrate reçus:', settings);
-    
-    // Stocker les paramètres dans une variable globale pour les futures vues
+
+  // Event to receive bitrate settings
+  ipcMain.on("update-bitrate-settings", (event, settings) => {
+    console.log("Bitrate settings received:", settings);
+
+    // Store settings in a global variable for future views
     global.serverConfig = {
       region: settings.region,
       hostBitrate: settings.hostBitrate,
-      playerBitrate: settings.playerBitrate
+      playerBitrate: settings.playerBitrate,
     };
-    
-    // Mettre à jour les vues existantes si elles existent
+
+    // Update existing views if they exist
     if (mainViewWindow && mainViewWindow.views) {
-      mainViewWindow.views.forEach(view => {
+      mainViewWindow.views.forEach((view) => {
         if (view.webContents && !view.webContents.isDestroyed()) {
-          // Déterminer le bitrate selon le type de vue
-          const bitrate = view.viewType === 'host' ? settings.hostBitrate : settings.playerBitrate;
-          
-          // Envoyer la nouvelle configuration à la vue
-          view.webContents.send('server-config', {
+          // Determine bitrate based on view type
+          const bitrate =
+            view.viewType === "host"
+              ? settings.hostBitrate
+              : settings.playerBitrate;
+
+          // Send new configuration to the view
+          view.webContents.send("server-config", {
             region: settings.region,
             bitrate: bitrate,
-            bypassRestriction: 'off'
+            bypassRestriction: "off",
           });
-          
-          console.log(`Configuration envoyée à la vue ${view.viewNumber} (${view.viewType}): bitrate=${bitrate}, region=${settings.region}`);
+
+          console.log(
+            `Configuration sent to view ${view.viewNumber} (${view.viewType}): bitrate=${bitrate}, region=${settings.region}`
+          );
         }
       });
     }
   });
-  
-  // Événement pour demander l'état des vues
-  ipcMain.on('request-views-state', (event) => {
+
+  // Event to request views state
+  ipcMain.on("request-views-state", (event) => {
     if (mainViewWindow) {
       mainViewWindow.updateSyncPanel();
     }
   });
-  
-  // Événement pour synchroniser les vues
-  ipcMain.on('synchronize-views', (event, selectedIndices) => {
+
+  // Event to synchronize views
+  ipcMain.on("synchronize-views", (event, selectedIndices) => {
     if (mainViewWindow) {
       mainViewWindow.synchronizeViews(selectedIndices);
     }
   });
-  
-  // Événements pour les touches clavier synchronisées
-  ipcMain.on('keyboard-event', (event, keyEvent) => {
+
+  // Events for synchronized keyboard keys
+  ipcMain.on("keyboard-event", (event, keyEvent) => {
     if (mainViewWindow) {
       mainViewWindow.handleSynchronizedKeyboard(keyEvent);
     }
   });
-  
-  // Gérer le défilement du conteneur principal
-  ipcMain.on('container-scrolled', (event, position) => {
+
+  // Handle main container scrolling
+  ipcMain.on("container-scrolled", (event, position) => {
     if (mainViewWindow) {
       mainViewWindow.handleContainerScroll(position);
     }
   });
-  
-  // Gérer les événements de la molette
-  ipcMain.on('wheel-scrolled', (event, delta) => {
+
+  // Handle wheel events
+  ipcMain.on("wheel-scrolled", (event, delta) => {
     if (mainViewWindow) {
       mainViewWindow.handleWheelScroll(delta);
     }
   });
-  
-  // Gérer les événements clavier pour le défilement
-  ipcMain.on('keyboard-scroll', (event, data) => {
+
+  // Handle keyboard events for scrolling
+  ipcMain.on("keyboard-scroll", (event, data) => {
     if (mainViewWindow) {
       mainViewWindow.handleKeyboardScroll(data);
     }
   });
 }
 
-ipcMain.on('sync-scroll', (event, scrollPos) => {
+ipcMain.on("sync-scroll", (event, scrollPos) => {
   if (mainViewWindow) {
     mainViewWindow.syncScroll(scrollPos);
   }
 });
 
-// Gestionnaire pour la macro de simulation de touches
-ipcMain.on('toggle-macro', (event, enabled) => {
+// Handler for key simulation macro
+ipcMain.on("toggle-macro", (event, enabled) => {
   if (enabled) {
     startMacro();
   } else {
@@ -313,91 +319,110 @@ ipcMain.on('toggle-macro', (event, enabled) => {
   }
 });
 
-// Fonction pour démarrer la macro
+// Function to start the macro
 function startMacro() {
   if (macroActive || !mainViewWindow) return;
-  
+
   macroActive = true;
-  
-  // Notifier l'interface que la macro est active
+
+  // Notify interface that macro is active
   if (mainViewWindow && mainViewWindow.window) {
-    mainViewWindow.window.webContents.send('macro-status-change', { enabled: true });
+    mainViewWindow.window.webContents.send("macro-status-change", {
+      enabled: true,
+    });
   }
-  
-  // Tableau des touches à simuler en rotation
-  const mainKeys = ['a', 's', 'd', 'w'];
-  const randomKeys = ['a', 's', 'd', 'w', 'q', 'e', 'z', 'x', 'c', 'space', 'shift', 'control'];
+
+  // Array of keys to simulate in rotation
+  const mainKeys = ["a", "s", "d", "w"];
+  const randomKeys = [
+    "a",
+    "s",
+    "d",
+    "w",
+    "q",
+    "e",
+    "z",
+    "x",
+    "c",
+    "space",
+    "shift",
+    "control",
+  ];
   let currentKeyIndex = 0;
-  
-  // Fonction pour simuler une touche principale pendant 500ms
+
+  // Function to simulate a main key for 500ms
   const simulateMainKey = () => {
     if (!macroActive || !mainViewWindow) return;
-    
+
     const key = mainKeys[currentKeyIndex];
     currentKeyIndex = (currentKeyIndex + 1) % mainKeys.length;
-    
-    // Simuler la touche enfoncée
-    mainViewWindow.views.forEach(view => {
+
+    // Simulate key pressed
+    mainViewWindow.views.forEach((view) => {
       if (!view.webContents.isDestroyed()) {
-        view.webContents.sendInputEvent({ type: 'keyDown', keyCode: key });
-        
-        // Relâcher la touche après 500ms
+        view.webContents.sendInputEvent({ type: "keyDown", keyCode: key });
+
+        // Release key after 500ms
         setTimeout(() => {
           if (!view.webContents.isDestroyed()) {
-            view.webContents.sendInputEvent({ type: 'keyUp', keyCode: key });
+            view.webContents.sendInputEvent({ type: "keyUp", keyCode: key });
           }
         }, 500);
       }
     });
   };
-  
-  // Fonction pour simuler une touche aléatoire
+
+  // Function to simulate a random key
   const simulateRandomKey = () => {
     if (!macroActive || !mainViewWindow) return;
-    
+
     const key = randomKeys[Math.floor(Math.random() * randomKeys.length)];
-    
-    mainViewWindow.views.forEach(view => {
+
+    mainViewWindow.views.forEach((view) => {
       if (!view.webContents.isDestroyed()) {
-        view.webContents.sendInputEvent({ type: 'keyDown', keyCode: key });
-        
-        // Relâcher la touche après 100ms
+        view.webContents.sendInputEvent({ type: "keyDown", keyCode: key });
+
+        // Release key after 100ms
         setTimeout(() => {
           if (!view.webContents.isDestroyed()) {
-            view.webContents.sendInputEvent({ type: 'keyUp', keyCode: key });
+            view.webContents.sendInputEvent({ type: "keyUp", keyCode: key });
           }
         }, 100);
       }
     });
   };
-  
-  // Démarrer l'intervalle pour simuler les touches principales
-  const mainKeyInterval = setInterval(simulateMainKey, 2000); // toutes les 2 secondes
-  
-  // Démarrer l'intervalle pour simuler les touches aléatoires
-  const randomKeyInterval = setInterval(simulateRandomKey, 1000); // toutes les 1 seconde
-  
+
+  // Start interval to simulate main keys
+  const mainKeyInterval = setInterval(simulateMainKey, 2000); // every 2 seconds
+
+  // Start interval to simulate random keys
+  const randomKeyInterval = setInterval(simulateRandomKey, 1000); // every 1 second
+
   macroInterval = {
     mainKeyInterval,
-    randomKeyInterval
+    randomKeyInterval,
   };
 }
 
-// Fonction pour arrêter la macro
+// Function to stop the macro
 function stopMacro() {
   if (!macroActive) return;
-  
+
   macroActive = false;
-  
-  // Notifier l'interface que la macro est inactive
+
+  // Notify interface that macro is inactive
   if (mainViewWindow && mainViewWindow.window) {
-    mainViewWindow.window.webContents.send('macro-status-change', { enabled: false });
+    mainViewWindow.window.webContents.send("macro-status-change", {
+      enabled: false,
+    });
   }
-  
-  // Arrêter les intervalles
+
+  // Stop intervals
   if (macroInterval) {
-    if (macroInterval.mainKeyInterval) clearInterval(macroInterval.mainKeyInterval);
-    if (macroInterval.randomKeyInterval) clearInterval(macroInterval.randomKeyInterval);
+    if (macroInterval.mainKeyInterval)
+      clearInterval(macroInterval.mainKeyInterval);
+    if (macroInterval.randomKeyInterval)
+      clearInterval(macroInterval.randomKeyInterval);
     macroInterval = null;
   }
-} 
+}
