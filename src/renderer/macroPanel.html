@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panneau de Macros</title>
+  <style>
+    :root {
+      --primary: #e11d48;
+      --primary-dark: #be123c;
+      --secondary: #f43f5e;
+      --dark: #0f0f0f;
+      --light: #f8fafc;
+      --host-color: #f97316;
+      --player-color: #3b82f6;
+      --selected-color: #22c55e;
+      --controlbar-gradient-start: #881337;
+      --controlbar-gradient-end: #b91c1c;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--dark);
+      color: var(--light);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    
+    h1 {
+      text-align: center;
+      font-size: 20px;
+      margin: 0;
+      color: var(--light);
+      padding: 10px 0;
+      background: linear-gradient(to right, var(--controlbar-gradient-start), var(--controlbar-gradient-end));
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .macro-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+    
+    .game-mode-indicator {
+      text-align: center;
+      font-size: 16px;
+      margin: 10px 0;
+      font-weight: bold;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 5px;
+      border-radius: 4px;
+    }
+    
+    .macro-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .macro-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #333;
+      border: 1px solid #555;
+      color: white;
+      padding: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 80px;
+      text-align: center;
+    }
+    
+    .macro-btn:hover {
+      background-color: #444;
+      border-color: var(--secondary);
+    }
+    
+    .macro-btn.active {
+      background-color: var(--primary-dark);
+      border-color: var(--selected-color);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+    }
+    
+    .macro-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .macro-shortcut {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .macro-description {
+      font-size: 11px;
+      margin-top: 5px;
+      opacity: 0.7;
+    }
+    
+    .no-macros {
+      text-align: center;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="macro-container">
+    <h1>Panneau de Macros</h1>
+    
+    <div id="game-mode-indicator" class="game-mode-indicator">
+      Chargement...
+    </div>
+    
+    <div id="macro-grid" class="macro-grid">
+      <!-- Les macros seront générées ici dynamiquement -->
+    </div>
+    
+    <div id="no-macros" class="no-macros" style="display: none;">
+      Aucune macro n'est disponible pour ce mode de jeu.
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Récupérer le mode de jeu depuis les paramètres URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const gameMode = urlParams.get('mode') || 'multiplayer';
+      
+      // Configuration des macros par mode de jeu
+      const macrosByMode = {
+        // Macros pour Multiplayer et CDL (identiques)
+        multiplayer: [
+          {
+            id: 'macro1',
+            name: 'Multi-Search',
+            shortcut: 'ALT+1',
+            description: 'Appuyez sur R dans toutes les vues',
+            icon: '🔍'
+          },
+          {
+            id: 'macro2',
+            name: 'Abandon & Next',
+            shortcut: 'ALT+2',
+            description: 'Sequénce: Echap, Tab x2, Entrée',
+            icon: '⏭️'
+          },
+          {
+            id: 'macro3',
+            name: 'Fullscreen',
+            shortcut: 'ALT+3',
+            description: 'Passer en plein écran (F11)',
+            icon: '📺'
+          },
+          {
+            id: 'macro4',
+            name: 'Auto Mouvement',
+            shortcut: 'ALT+M',
+            description: 'Activer/désactiver les mouvements automatiques',
+            icon: '🔄',
+            toggleable: true
+          }
+        ],
+        
+        // Copier les mêmes macros pour CDL
+        cdl: [],
+        
+        // Warzone - ajouter seulement la macro de mouvements automatiques
+        warzone: [
+          {
+            id: 'macro4',
+            name: 'Auto Mouvement',
+            shortcut: 'ALT+M',
+            description: 'Activer/désactiver les mouvements automatiques',
+            icon: '🔄',
+            toggleable: true
+          }
+        ],
+        
+        // Warzone - macros spécifiques au mode Warzone
+        warzone: [
+          {
+            id: 'macro5',
+            name: 'Auto Drop',
+            shortcut: 'ALT+D',
+            description: 'Espace sur Hosts puis Players après 0,3s',
+            icon: '🪂',
+            toggleable: false
+          },
+          {
+            id: 'macro6',
+            name: 'AFK Host',
+            shortcut: 'ALT+H',
+            description: 'Mouvement sur Hosts (1s appui, 2s pause)',
+            icon: '🏠',
+            toggleable: true
+          },
+          {
+            id: 'macro7',
+            name: 'AFK Player',
+            shortcut: 'ALT+P',
+            description: 'Mouvement sur Players (0,6s appui, 1s pause)',
+            icon: '👤',
+            toggleable: true
+          },
+          {
+            id: 'macro8',
+            name: 'AFK Host+Player',
+            shortcut: 'ALT+A',
+            description: 'Maintient l\'activité sur les hôtes et les joueurs en effectuant une séquence de mouvements ZQSD et des appuis sur V (coup de couteau) toutes les 3 secondes sur les players uniquement. Se redémarre automatiquement toutes les 60 secondes pour éviter les bugs.',
+            icon: '👥',
+            toggleable: true
+          }
+        ]
+      };
+      
+      // Copier les macros de multiplayer pour cdl (elles sont identiques)
+      macrosByMode.cdl = [...macrosByMode.multiplayer];
+      
+      // Mettre à jour l'indicateur de mode de jeu
+      const modeNames = {
+        multiplayer: 'Multijoueur',
+        cdl: 'CDL',
+        warzone: 'Warzone'
+      };
+      
+      document.getElementById('game-mode-indicator').textContent = 
+        `Mode: ${modeNames[gameMode] || gameMode}`;
+      
+      // Récupérer les macros pour ce mode de jeu
+      const macros = macrosByMode[gameMode] || [];
+      
+      // Afficher un message si aucune macro n'est disponible
+      if (macros.length === 0) {
+        document.getElementById('no-macros').style.display = 'block';
+        document.getElementById('macro-grid').style.display = 'none';
+      } else {
+        document.getElementById('no-macros').style.display = 'none';
+        document.getElementById('macro-grid').style.display = 'grid';
+        
+        // Générer les boutons de macro
+        const macroGrid = document.getElementById('macro-grid');
+        macroGrid.innerHTML = '';
+        
+        macros.forEach(macro => {
+          const btn = document.createElement('div');
+          btn.className = 'macro-btn';
+          btn.id = macro.id;
+          btn.dataset.id = macro.id;
+          btn.dataset.toggleable = macro.toggleable || false;
+          
+          const nameEl = document.createElement('div');
+          nameEl.className = 'macro-name';
+          nameEl.textContent = `${macro.icon || ''} ${macro.name}`;
+          
+          const shortcutEl = document.createElement('div');
+          shortcutEl.className = 'macro-shortcut';
+          shortcutEl.textContent = macro.shortcut;
+          
+          const descEl = document.createElement('div');
+          descEl.className = 'macro-description';
+          descEl.textContent = macro.description;
+          
+          btn.appendChild(nameEl);
+          btn.appendChild(shortcutEl);
+          btn.appendChild(descEl);
+          
+          // Ajouter l'événement de clic
+          btn.addEventListener('click', () => {
+            // Pour les macros togglables, basculer la classe active
+            if (macro.toggleable) {
+              btn.classList.toggle('active');
+            } else {
+              // Effet visuel temporaire pour les macros non togglables
+              btn.classList.add('active');
+              setTimeout(() => btn.classList.remove('active'), 500);
+            }
+            
+            // Exécuter la macro via l'API
+            if (window.macroAPI) {
+              window.macroAPI.executeMacro(macro.id, gameMode);
+            }
+          });
+          
+          if (macro.id === 'macro8' || macro.name === 'AFK Host+Player') {
+            macro.description = 'Maintient l\'activité sur les hôtes et les joueurs en effectuant une séquence de mouvements ZQSD et des appuis sur V (coup de couteau) toutes les 3 secondes sur les players uniquement. Se redémarre automatiquement toutes les 60 secondes pour éviter les bugs.';
+          }
+          
+          macroGrid.appendChild(btn);
+        });
+      }
+      
+      // Écouter les mises à jour de statut de macro
+      if (window.macroAPI && window.macroAPI.onMacroStatus) {
+        window.macroAPI.onMacroStatus((status) => {
+          const macroBtn = document.getElementById(status.macroId);
+          if (macroBtn && macroBtn.dataset.toggleable === 'true') {
+            if (status.running) {
+              macroBtn.classList.add('active');
+            } else {
+              macroBtn.classList.remove('active');
+            }
+          }
+        });
+      }
+      
+      // Si l'API est disponible, demander les macros au processus principal
+      if (window.macroAPI && window.macroAPI.requestMacros) {
+        window.macroAPI.requestMacros(gameMode);
+        
+        // Écouter les mises à jour des macros disponibles
+        if (window.macroAPI.onMacrosLoaded) {
+          window.macroAPI.onMacrosLoaded((macrosData) => {
+            // Cette fonction permettrait de mettre à jour dynamiquement les macros
+            // si elle est implémentée dans le backend
+            console.log('Macros mises à jour:', macrosData);
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html> 

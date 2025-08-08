@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vérification de Licence</title>
+  <link rel="stylesheet" href="styles/license.css">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* Styles pour le sélecteur de langue */
+    .language-selector {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .language-selector-inner {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 5px 12px;
+      border-radius: 20px;
+      box-shadow: 0 0 10px rgba(0, 150, 255, 0.7);
+      backdrop-filter: blur(3px);
+      border: 1px solid rgba(0, 150, 255, 0.5);
+    }
+    .language-selector select {
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      border: 1px solid rgba(0, 150, 255, 0.5);
+      border-radius: 15px;
+      padding: 3px 10px;
+      font-family: 'Rajdhani', sans-serif;
+      outline: none;
+      box-shadow: inset 0 0 5px rgba(0, 150, 255, 0.3);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 110px;
+    }
+    .language-selector select:hover {
+      border-color: rgba(0, 200, 255, 0.8);
+      box-shadow: 0 0 8px rgba(0, 200, 255, 0.8), inset 0 0 5px rgba(0, 150, 255, 0.3);
+    }
+    .language-selector select:focus {
+      border-color: rgba(0, 255, 255, 1);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8), inset 0 0 5px rgba(0, 150, 255, 0.3);
+    }
+    .language-selector label {
+      margin-right: 10px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 500;
+      text-shadow: 0 0 5px rgba(0, 150, 255, 0.7);
+      white-space: nowrap;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Particules d'effet -->
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  <div class="particle"></div>
+  
+  
+  <!-- Curseur principal -->
+  <div class="cursor-dot" id="cursor-dot"></div>
+  
+  <!-- Conteneur pour la traînée -->
+  <div class="cursor-trail-container" id="cursor-trail-container"></div>
+  
+  <div class="container">
+    <!-- Déplacé à l'intérieur du container et avant le header -->
+    <div class="language-selector">
+      <div class="language-selector-inner hologram-effect">
+        <label for="language-select" data-i18n="language.select">Langue:</label>
+        <select id="language-select">
+          <option value="fr" selected>Français</option>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="de">Deutsch</option>
+          <option value="ru">Русский</option>
+          <option value="pt">Português</option>
+          <option value="it">Italiano</option>
+          <option value="ar">العربية</option>
+          <option value="ja">日本語</option>
+          <option value="zh">中文</option>
+          <option value="ko">한국어</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="header hologram-effect">
+      <h1 data-text="Vérification de Licence" data-i18n="app.title">Vérification de Licence</h1>
+    </div>
+    
+    <div class="card hologram-effect" id="license-form">
+      <div id="saved-license-notification" class="saved-license-notification" style="display: none;">
+        <p><span data-i18n="license.savedLicense">Une licence est déjà enregistrée:</span> <span id="saved-license-display"></span></p>
+        <div class="action-buttons" style="display: flex; flex-direction: column; gap: 10px;">
+          <button id="useSavedBtn" class="btn btn-block" data-i18n="license.useThis">Utiliser cette licence</button>
+          <button id="enterNewBtn" class="btn btn-block btn-secondary" data-i18n="license.enterNew">Entrer une nouvelle licence</button>
+        </div>
+      </div>
+      
+      <div id="license-input-form">
+        <div class="form-group">
+          <label for="licenseKey" data-i18n="license.key">Clé de Licence</label>
+          <input type="text" id="licenseKey" class="form-control" data-i18n-placeholder="license.keyPlaceholder" placeholder="Entrez votre clé de licence">
+        </div>
+        <button id="validateBtn" class="btn btn-block" data-i18n="license.validate">Valider la Licence</button>
+      </div>
+      
+      <div class="buy-license-section" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+        <p style="text-align: center; margin-bottom: 10px;" data-i18n="license.notYetLicense">Vous n'avez pas encore de licence?</p>
+        <button id="buyLicenseBtn" class="btn btn-block btn-secondary" data-i18n="license.buy">Acheter une Licence</button>
+      </div>
+    </div>
+    
+    <div id="checking-result" class="result hologram-effect" style="display: none;">
+      <div class="spinner"></div>
+      <p data-i18n="license.checking">Vérification de votre licence...</p>
+    </div>
+    
+    <div id="valid-result" class="result valid hologram-effect" style="display: none;">
+      <div class="result-icon">✓</div>
+      <h2 data-i18n="license.valid">Licence Valide</h2>
+      <p data-i18n="license.validSuccess">Votre licence a été validée avec succès.</p>
+      
+      <div class="license-info">
+        <div class="license-key-display">
+          <p><strong data-i18n="license.key">Clé de licence:</strong> <span id="license-key-display"></span></p>
+        </div>
+        <div id="expiration-info"></div>
+      </div>
+      
+      <div class="license-question">
+        <h3 data-i18n="license.useQuestion">Utiliser cette licence ?</h3>
+        <div class="action-buttons">
+          <button id="useYesBtn" class="btn btn-success" data-i18n="license.yes">Oui</button>
+          <button id="useNoBtn" class="btn btn-danger" data-i18n="license.no">Non</button>
+        </div>
+      </div>
+      
+      <div id="update-section" style="margin-top: 15px;">
+        <div style="display: flex; gap: 10px; width: 100%;">
+          <button id="checkUpdatesBtn" class="btn flex-equal" style="width: 50%;" data-i18n="updates.check">Vérifier les mises à jour</button>
+          <button id="viewChangelogBtn" class="btn btn-secondary flex-equal" style="width: 50%; margin-top: 0;" data-i18n="updates.changelog">Historique des versions</button>
+        </div>
+        
+        <div id="update-info" class="update-info" style="display: none; margin-top: 10px;">
+          <div class="update-info-title">
+            <i id="update-icon">🔄</i>
+            <span id="update-title" data-i18n="updates.checking">Vérification des mises à jour...</span>
+          </div>
+          <p id="update-message"></p>
+          <div id="update-action" class="update-action" style="display: none;">
+            <button id="downloadUpdateBtn" class="btn btn-secondary" data-i18n="updates.download">Télécharger la mise à jour</button>
+          </div>
+        </div>
+        
+        <div id="changelog-info" class="update-info" style="display: none; margin-top: 10px;">
+          <div class="update-info-title">
+            <i id="changelog-icon">📋</i>
+            <span id="changelog-title" data-i18n="updates.changelog">Historique des versions</span>
+          </div>
+          <div id="changelog-content" class="changelog-content"></div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <div id="invalid-result" class="result invalid hologram-effect" style="display: none;">
+      <div class="result-icon">✗</div>
+      <h2 data-i18n="license.invalid">Licence Non Valide</h2>
+      <p id="invalid-message" data-i18n="license.invalidDefault">Impossible de valider votre licence.</p>
+      <button id="retryBtn" class="btn" style="margin-top: 15px;" data-i18n="license.retry">Réessayer</button>
+      
+      <div class="buy-license-section" style="margin-top: 25px; padding-top: 15px; border-top: 1px solid rgba(255, 0, 0, 0.3);">
+        <p style="text-align: center; margin-bottom: 10px;" data-i18n="license.needValid">Besoin d'une licence valide?</p>
+        <button id="buyLicenseBtnInvalid" class="btn btn-block btn-secondary" data-i18n="license.buy">Acheter une Licence</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>&copy; 2025 6Truc. <span data-i18n="app.allRights">Tous droits réservés.</span></p>
+  </div>
+  
+  <script src="licenseRenderer.js"></script>
+  
+  <!-- Script pour le changement de langue -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Cache pour stocker les traductions chargées
+      const translationsCache = {};
+      
+      /**
+       * Charge un fichier de traduction
+       * @param {string} language - Code de la langue à charger
+       * @returns {Promise<Object>} - Promesse résolue avec les traductions
+       */
+      async function loadTranslations(language) {
+        // Si déjà en cache, retourner directement
+        if (translationsCache[language]) {
+          return translationsCache[language];
+        }
+        
+        try {
+          // Charger le fichier JSON
+          const response = await fetch(`../translations/${language}.json`);
+          
+          // Vérifier si la réponse est OK
+          if (!response.ok) {
+            console.error(`[i18n] Erreur lors du chargement des traductions pour ${language}: ${response.status} ${response.statusText}`);
+            return null;
+          }
+          
+          // Parser le JSON
+          const translations = await response.json();
+          
+          // Mettre en cache
+          translationsCache[language] = translations;
+          
+          console.log(`[i18n] Traductions chargées pour la langue: ${language}`);
+          return translations;
+        } catch (error) {
+          console.error(`[i18n] Erreur lors du chargement des traductions pour ${language}:`, error);
+          return null;
+        }
+      }
+      
+      /**
+       * Obtient une traduction par sa clé
+       * @param {string} key - Clé de traduction (format: namespace.key ou key)
+       * @param {Object} translations - Objet de traductions
+       * @returns {string} - Texte traduit ou clé si non trouvé
+       */
+      function getTranslation(key, translations) {
+        if (!translations) return key;
+        
+        // Diviser la clé en parties (ex: "app.title" -> ["app", "title"])
+        const parts = key.split('.');
+        let result = translations;
+        
+        // Parcourir les parties pour obtenir la valeur
+        for (const part of parts) {
+          if (result && result[part] !== undefined) {
+            result = result[part];
+          } else {
+            // Clé non trouvée, renvoyer la clé elle-même
+            console.warn(`[i18n] Clé de traduction non trouvée: ${key}`);
+            return key;
+          }
+        }
+        
+        return result;
+      }
+      
+      /**
+       * Met à jour l'interface avec les traductions
+       * @param {Object} translations - Objet contenant les traductions
+       */
+      function updateUI(translations) {
+        if (!translations) return;
+        
+        // Injecter les traductions dans un div caché pour licenseRenderer.js
+        let translationsDiv = document.getElementById('translations-data');
+        if (!translationsDiv) {
+          translationsDiv = document.createElement('div');
+          translationsDiv.id = 'translations-data';
+          translationsDiv.style.display = 'none';
+          document.body.appendChild(translationsDiv);
+        }
+        translationsDiv.textContent = JSON.stringify(translations);
+        
+        // Mettre à jour tous les éléments avec l'attribut data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+          const key = element.getAttribute('data-i18n');
+          const translation = getTranslation(key, translations);
+          
+          if (translation) {
+            // Si c'est un élément data-text (effet hologram)
+            if (element.hasAttribute('data-text')) {
+              element.setAttribute('data-text', translation);
+            }
+            
+            // Mettre à jour le contenu
+            element.textContent = translation;
+          }
+        });
+        
+        // Mettre à jour tous les placeholders
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+          const key = element.getAttribute('data-i18n-placeholder');
+          const translation = getTranslation(key, translations);
+          
+          if (translation && element.hasAttribute('placeholder')) {
+            element.setAttribute('placeholder', translation);
+          }
+        });
+        
+        // Mettre à jour le titre de la page
+        const titleTranslation = getTranslation('app.title', translations);
+        if (titleTranslation) {
+          document.title = titleTranslation;
+        }
+      }
+      
+      /**
+       * Change la langue de l'interface
+       * @param {string} language - Code de la langue
+       */
+      async function changeLanguage(language) {
+        const translations = await loadTranslations(language);
+        if (translations) {
+          updateUI(translations);
+          localStorage.setItem('app-language-preference', language);
+          console.log(`[i18n] Langue changée pour: ${language}`);
+          
+          // Déclencher un événement personnalisé pour notifier les scripts qui ont du contenu dynamique
+          const languageChangeEvent = new CustomEvent('languageChanged', { 
+            detail: { language, translations } 
+          });
+          document.dispatchEvent(languageChangeEvent);
+          
+          // Propager le changement de langue aux services backend
+          try {
+            await window.licenseAPI.changeLanguage(language);
+            console.log(`[i18n] Langue propagée aux services: ${language}`);
+          } catch (error) {
+            console.error(`[i18n] Erreur lors de la propagation de la langue: ${error}`);
+          }
+        } else {
+          console.error(`[i18n] Impossible de changer la langue pour: ${language}`);
+        }
+      }
+
+      const languageSelect = document.getElementById('language-select');
+      
+      // Charger la langue préférée depuis localStorage
+      const savedLanguage = localStorage.getItem('app-language-preference') || 'fr';
+      languageSelect.value = savedLanguage;
+      
+      // Appliquer la langue au chargement
+      changeLanguage(savedLanguage);
+      
+      // Sauvegarder le choix de langue et mettre à jour l'interface
+      languageSelect.addEventListener('change', function() {
+        const selectedLanguage = this.value;
+        changeLanguage(selectedLanguage);
+      });
+    });
+  </script>
+  
+  <!-- Script pour l'effet de traînée du curseur -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Supprimer le conteneur de traînée existant
+      const trailContainer = document.getElementById('cursor-trail-container');
+      if (trailContainer) {
+        trailContainer.remove();
+      }
+      
+      // Référence au point principal du curseur
+      const cursorDot = document.getElementById('cursor-dot');
+      
+      // Masquer le curseur natif
+      document.body.style.cursor = 'none';
+      
+      // Tableau pour stocker les particules de traînée
+      const trailElements = [];
+      const MAX_TRAIL_PARTICLES = 15; // Limiter le nombre de particules
+      
+      // Activer le curseur personnalisé sur les éléments interactifs
+      const interactiveElements = document.querySelectorAll('button, input, a, select');
+      interactiveElements.forEach(element => {
+        element.addEventListener('mouseenter', () => {
+          cursorDot.style.width = '20px';
+          cursorDot.style.height = '20px';
+          cursorDot.style.opacity = '0.9';
+          cursorDot.style.border = '2px solid white';
+          cursorDot.style.background = 'rgba(0, 0, 255, 0.7)';
+        });
+        
+        element.addEventListener('mouseleave', () => {
+          cursorDot.style.width = '10px';
+          cursorDot.style.height = '10px';
+          cursorDot.style.opacity = '1';
+          cursorDot.style.border = 'none';
+          cursorDot.style.background = 'rgba(255, 0, 0, 1)';
+        });
+      });
+      
+      // Mettre à jour la position du curseur principal
+      document.addEventListener('mousemove', function(e) {
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+        
+        // Appliquer la position avec clientX/clientY (relatif à la fenêtre visible)
+        cursorDot.style.left = `${mouseX}px`;
+        cursorDot.style.top = `${mouseY}px`;
+        
+        // Créer une particule de traînée avec une position limitée
+        createTrailElement(mouseX, mouseY);
+      });
+      
+      // Fonction pour créer un élément de traînée qui disparaît progressivement
+      function createTrailElement(x, y) {
+        // Limiter le nombre de particules
+        if (trailElements.length >= MAX_TRAIL_PARTICLES) {
+          // Supprimer la plus ancienne particule
+          const oldestTrail = trailElements.shift();
+          if (oldestTrail && oldestTrail.parentNode) {
+            oldestTrail.parentNode.removeChild(oldestTrail);
+          }
+        }
+        
+        // Créer un nouvel élément div pour la traînée
+        const trail = document.createElement('div');
+        trail.classList.add('trail-particle');
+        
+        // Appliquer les styles initiaux
+        trail.style.position = 'fixed'; // fixed au lieu de absolute pour suivre la vue
+        trail.style.width = '8px';
+        trail.style.height = '8px';
+        trail.style.borderRadius = '50%';
+        trail.style.background = 'radial-gradient(circle, rgba(255, 0, 0, 1) 0%, rgba(255, 0, 0, 0.6) 40%, transparent 90%)';
+        trail.style.boxShadow = '0 0 5px #ff0000';
+        trail.style.left = `${x}px`;
+        trail.style.top = `${y}px`;
+        trail.style.transform = 'translate(-50%, -50%)';
+        trail.style.pointerEvents = 'none';
+        trail.style.zIndex = '9999';
+        trail.style.mixBlendMode = 'screen';
+        trail.style.opacity = '0.8';
+        
+        // Ajouter l'élément au body
+        document.body.appendChild(trail);
+        
+        // Ajouter au tableau des particules
+        trailElements.push(trail);
+        
+        // Animation d'opacité pour faire disparaître l'élément
+        let opacity = 0.8;
+        let size = 8;
+        
+        const fadeOut = setInterval(() => {
+          opacity -= 0.05;
+          size += 0.25;
+          
+          if (trail && trail.style) {
+            trail.style.opacity = opacity;
+            trail.style.width = `${size}px`;
+            trail.style.height = `${size}px`;
+            trail.style.filter = `blur(${(1 - opacity) * 3}px)`;
+            
+            if (opacity <= 0) {
+              clearInterval(fadeOut);
+              if (trail.parentNode) {
+                trail.parentNode.removeChild(trail);
+              }
+              // Supprimer du tableau
+              const index = trailElements.indexOf(trail);
+              if (index > -1) {
+                trailElements.splice(index, 1);
+              }
+            }
+          } else {
+            clearInterval(fadeOut);
+          }
+        }, 25);
+      }
+      
+      // Gérer le cas où le curseur quitte la fenêtre
+      document.addEventListener('mouseout', function(e) {
+        if (e.relatedTarget === null) {
+          cursorDot.style.opacity = '0';
+        }
+      });
+      
+      document.addEventListener('mouseover', function(e) {
+        cursorDot.style.opacity = '1';
+      });
+      
+      // Nettoyer les particules de traînée au défilement pour éviter la surcharge
+      let scrollTimeout;
+      window.addEventListener('scroll', function() {
+        // Masquer temporairement les particules pendant le défilement
+        trailElements.forEach(trail => {
+          if (trail && trail.style) {
+            trail.style.opacity = '0';
+          }
+        });
+        
+        // Effacer le timeout existant
+        clearTimeout(scrollTimeout);
+        
+        // Définir un nouveau timeout
+        scrollTimeout = setTimeout(function() {
+          // Supprimer toutes les anciennes particules après le défilement
+          trailElements.forEach(trail => {
+            if (trail && trail.parentNode) {
+              trail.parentNode.removeChild(trail);
+            }
+          });
+          // Vider le tableau
+          trailElements.length = 0;
+        }, 100);
+      });
+    });
+  </script>
+</body>
+</html> 
